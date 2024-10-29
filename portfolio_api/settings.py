@@ -67,12 +67,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "portfolio_api.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if "RDS_HOSTNAME" in os.environ and not DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ["RDS_DB_NAME"],
+            "USER": os.environ["RDS_USERNAME"],
+            "PASSWORD": os.environ["RDS_PASSWORD"],
+            "HOST": os.environ["RDS_HOSTNAME"],
+            "PORT": os.environ["RDS_PORT"],
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -118,3 +130,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4321",
     "http://127.0.0.1:4321",
 ]
+
+ADMINS = [
+    (os.environ.get("ADMIN_NAME"), os.environ.get("ADMIN_EMAIL")),
+]
+
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ.get("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_TO_USER = os.environ.get("EMAIL_TO_USER")
