@@ -25,8 +25,8 @@ BASE_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "rest_framework",
     "corsheaders",
+    "rest_framework",
 ]
 
 LOCAL_APPS = [
@@ -109,9 +109,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = "static"
 
-MEDIA_ROOT = BASE_DIR / "static/images/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = "media"
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
