@@ -1,6 +1,8 @@
 from datetime import timedelta
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
@@ -95,9 +97,7 @@ class ContactModelTest(TestCase):
 class ContactCreateViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse(
-            "contact"
-        )  # Asegurarse de que este nombre esté registrado en urls.py
+        self.url = reverse("contact")
         self.valid_payload = {
             "name": "Juan Pérez",
             "email": "juan.perez@example.com",
@@ -113,8 +113,9 @@ class ContactCreateViewTest(TestCase):
             "message": "Este es un mensaje de prueba.",
         }
 
-    def test_create_contact_success(self):
-        # Prueba de creación exitosa de contacto (código 201)
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_create_contact_and_send_email_success(self):
+        # Prueba de creación exitosa de contacto y envío de correo electrónico
         response = self.client.post(self.url, data=self.valid_payload, format="json")
         self.assertEqual(response.status_code, HTTP_201_CREATED)
         self.assertEqual(response.data["message"], "success")
@@ -126,15 +127,23 @@ class ContactCreateViewTest(TestCase):
         self.assertEqual(contact.email, self.valid_payload["email"])
         self.assertEqual(contact.message, self.valid_payload["message"])
 
+        # Verificar que el correo fue enviado
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(
+            email.subject, f"New contact from portfolio: {self.valid_payload['name']}"
+        )
+        self.assertEqual(email.to, [settings.EMAIL_TO_USER])
+        self.assertIn(self.valid_payload["message"], email.body)
+        self.assertIn(self.valid_payload["email"], email.body)
+
     def test_create_contact_invalid_email(self):
         # Prueba de validación de formato de correo electrónico
         response = self.client.post(
             self.url, data=self.invalid_email_payload, format="json"
         )
         self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            "email", response.data
-        )  # Verificar que el error esté en el campo `email`
+        self.assertIn("email", response.data)
 
     def test_create_contact_missing_name(self):
         # Prueba de campo obligatorio faltante (name)
@@ -142,9 +151,7 @@ class ContactCreateViewTest(TestCase):
             self.url, data=self.missing_name_payload, format="json"
         )
         self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            "name", response.data
-        )  # Verificar que el error esté en el campo `name`
+        self.assertIn("name", response.data)
 
     def test_create_contact_missing_email(self):
         # Prueba de campo obligatorio faltante (email)
@@ -171,6 +178,4 @@ class ContactCreateViewTest(TestCase):
     def test_permission_allow_any(self):
         # Prueba de permisos para asegurar que el endpoint esté accesible para todos
         response = self.client.post(self.url, data=self.valid_payload, format="json")
-        self.assertEqual(
-            response.status_code, HTTP_201_CREATED
-        )  # El acceso es permitido para cualquier usuario
+        self.assertEqual(response.status_code, HTTP_201_CREATED)

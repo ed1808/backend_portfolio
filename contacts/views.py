@@ -1,3 +1,5 @@
+from django.core.mail import send_mail
+from django.conf import settings
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -16,4 +18,13 @@ class ContactCreateView(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        send_mail(
+            f"New contact from portfolio: {serializer.data['name']}",
+            f"{serializer.data["message"]} | Contact email: {serializer.data['email']}",
+            settings.EMAIL_HOST_USER,
+            [settings.EMAIL_TO_USER],
+            fail_silently=True,
+        )
+
         return Response({"message": "success"}, status=HTTP_201_CREATED)
