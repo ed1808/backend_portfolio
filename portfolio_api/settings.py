@@ -132,9 +132,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
 }
 
-CORS_ALLOWED_ORIGINS = [
+""" CORS_ALLOWED_ORIGINS = [
     "*",
-]
+] """
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ADMINS = [
     (os.environ.get("ADMIN_NAME"), os.environ.get("ADMIN_EMAIL")),
