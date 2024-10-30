@@ -21,7 +21,7 @@ class ContactCreateView(CreateAPIView):
 
         send_mail(
             f"New contact from portfolio: {serializer.data['name']}",
-            f"{serializer.data["message"]} | Contact email: {serializer.data['email']}",
+            f"{serializer.data['message']} | Contact email: {serializer.data['email']}",
             settings.EMAIL_HOST_USER,
             [settings.EMAIL_TO_USER],
             fail_silently=True,
